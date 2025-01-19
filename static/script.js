@@ -39,4 +39,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 .catch(error => console.error("Fehler beim Speichern der Parameter:", error));
         }
     });
+    document.getElementById("calibrate-btn").addEventListener("click", () => {
+    const calibrationValue = parseFloat(document.getElementById("calibration-input").value);
+    if (!isNaN(calibrationValue)) {
+        fetch("/calibrate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ known_ec: calibrationValue })
+        })
+        .then(response => response.json())
+        .then(responseJson => {
+            alert(responseJson.message);
+        })
+        .catch(error => console.error("Fehler bei der Kalibrierung:", error));
+    }
+});
+
 });
