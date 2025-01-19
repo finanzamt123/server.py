@@ -1,37 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const container = document.getElementById("data-container");
+    const temperatureSpan = document.getElementById("temperature");
+    const ecSpan = document.getElementById("ec");
 
     function fetchData() {
-        fetch("/view")
+        fetch("/view") // Ruft die Daten vom Server ab
             .then(response => response.json())
             .then(data => {
-                let html = "<ul>";
-                data.forEach(item => {
-                    html += `<li>Temperatur: ${item.temperature} °C, EC: ${item.ec.toFixed(2)}</li>`;
-                });
-                html += "</ul>";
-                container.innerHTML = html;
+                if (data.length > 0) {
+                    const latest = data[data.length - 1]; // Letzter Eintrag
+                    temperatureSpan.textContent = latest.temperature.toFixed(1); // Temperatur aktualisieren
+                    ecSpan.textContent = latest.ec.toFixed(2); // EC-Wert aktualisieren
+                }
             })
-            .catch(error => {
-                console.error("Fehler beim Abrufen der Daten:", error);
-                container.innerHTML = "<p>Fehler beim Laden der Daten.</p>";
-            });
+            .catch(error => console.error("Fehler beim Abrufen der Daten:", error));
     }
 
     fetchData();
-    setInterval(fetchData, 5000); // Alle 5 Sekunden aktualisieren
-
-    document.getElementById("calibrate-btn").addEventListener("click", () => {
-        const factor = parseFloat(prompt("Neuen Kalibrierungsfaktor eingeben:"));
-        if (!isNaN(factor)) {
-            fetch("/calibrate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ factor })
-            })
-                .then(response => response.text())
-                .then(alert)
-                .catch(error => console.error("Fehler bei der Kalibrierung:", error));
-        }
-    });
+    setInterval(fetchData, 5000); // Alle 5 Sekunden neue Daten laden
 });
