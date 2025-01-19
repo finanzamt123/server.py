@@ -49,21 +49,23 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    document.getElementById("save-params-btn").addEventListener("click", () => {
-        const targetEc = parseFloat(targetEcInput.value);
-        const interval = parseInt(intervalInput.value);
+   document.getElementById("save-params-btn").addEventListener("click", () => {
+    const targetEc = parseFloat(targetEcInput.value);
+    const interval = parseInt(intervalInput.value);
 
-        if (!isNaN(targetEc) && !isNaN(interval)) {
-            fetch("/update_parameters", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ target_ec: targetEc, interval: interval })
+    if (!isNaN(targetEc) && !isNaN(interval)) {
+        fetch("/update_parameters", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ target_ec: targetEc, interval: interval })
+        })
+            .then(response => response.json())
+            .then(responseJson => {
+                alert(responseJson.message);
             })
-                .then(response => response.text())
-                .then(responseText => {
-                    alert(responseText);
-                })
-                .catch(error => console.error("Fehler beim Speichern der Parameter:", error));
-        }
-    });
+            .catch(error => console.error("Fehler beim Speichern der Parameter:", error));
+    }
+});
+
+    
 });
