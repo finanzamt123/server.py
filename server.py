@@ -85,6 +85,23 @@ def calibrate():
 @app.route('/')
 def index():
     return render_template('index.html')
+@app.route('/update_parameters', methods=['POST'])
+def update_parameters():
+    global target_ec, correction_interval
+
+    data = request.json
+    if not data:
+        return "Keine Daten erhalten", 400
+
+    # Ziel-EC-Wert und Korrekturintervall aktualisieren
+    target_ec = data.get('target_ec', target_ec)
+    correction_interval = data.get('interval', correction_interval)
+
+    return jsonify({
+        "message": "Parameter erfolgreich aktualisiert",
+        "target_ec": target_ec,
+        "interval": correction_interval
+    }), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
