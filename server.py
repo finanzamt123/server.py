@@ -72,3 +72,19 @@ def index():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+
+@app.route('/calibrate', methods=['POST'])
+def calibrate():
+    data = request.json
+    if not data:
+        return "Keine Daten erhalten", 400
+    
+    known_ec = data.get('known_ec')
+    if known_ec is None:
+        return "Kein Kalibrierungswert angegeben", 400
+
+    # Hier könntest du den Kalibrierungsfaktor setzen, z.B. in eine Datei speichern
+    global calibration_factor
+    calibration_factor = known_ec / current_ec_value  # current_ec_value ist der gemessene EC-Wert
+    return jsonify({"message": "Kalibrierung erfolgreich", "factor": calibration_factor})
+
