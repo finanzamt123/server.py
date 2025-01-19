@@ -1,17 +1,25 @@
 from flask import Flask, request, jsonify, render_template
 import json
 import os
+import time
 
 app = Flask(__name__)
 
+# Daten und Kalibrierung
 DATA_FILE = "data/data.json"
-
 os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
 if not os.path.isfile(DATA_FILE):
     with open(DATA_FILE, "w") as f:
         json.dump([], f)
 
-calibration_factor = 1.0  # Standard-Kalibrierungsfaktor
+# Kalibrierungsfaktor und Ziel EC-Wert
+calibration_factor = 1.0
+target_ec = 2.0  # Beispielzielwert für EC
+correction_interval = 60  # Korrekturintervall in Sekunden
+last_correction_time = time.time()
+
+# Pumpensteuerung
+pump_status = "AUS"
 
 @app.route('/data', methods=['POST'])
 def receive_data():
@@ -22,6 +30,7 @@ def receive_data():
     global calibration_factor
     data['ec'] *= calibration_factor  # EC-Wert kalibrieren
 
+    # Speichern der Sensordaten
     with open(DATA_FILE, "r+") as f:
         try:
             existing_data = json.load(f)
@@ -34,6 +43,36 @@ def receive_data():
 
     return "Daten erfolgreich gespeichert", 200
 
+@app.route('/view')
+def view_data():
+    with open(DATA_FILE, "r") as f:
+        data = json.load(f)
+    return jsonify(data)
+
+@app.route('/control', methods=['GET'])
+def control_pump():
+    global pump_status, last_correction_time, target_ec
+
+    # Berechne, ob der EC-Wert angepasst werden muss
+    current_time = time.time()
+    if current_time - last_correction_time >= correction_interval:
+        last_correction_time = current_time
+
+        # Berechne den aktuellen EC-Wert
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+            if data:
+                latest_data = data[-1]
+                current_ec = latest_data["ec"]
+
+                # Wenn der EC-Wert unter dem Zielwert liegt, Pumpe einschalten
+                if current_ec < target_ec:
+                    pump_status = "EIN"
+                else:
+                    pump_status = "AUS"
+
+    return pump_status
+
 @app.route('/calibrate', methods=['POST'])
 def calibrate():
     global calibration_factor
@@ -42,12 +81,6 @@ def calibrate():
         calibration_factor = float(new_factor)
         return f"Kalibrierung auf Faktor {calibration_factor} gesetzt", 200
     return "Kein Faktor angegeben", 400
-
-@app.route('/view')
-def view_data():
-    with open(DATA_FILE, "r") as f:
-        data = json.load(f)
-    return jsonify(data)
 
 @app.route('/')
 def index():
