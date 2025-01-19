@@ -43,28 +43,19 @@ def control_pump():
 
 @app.route('/update_parameters', methods=['POST'])
 def update_parameters():
-    global target_ec, correction_interval
+    data = request.get_json()
+    
+    if data:
+        ec_value = data.get('ec')
+        temperature = data.get('temperature')
+        if ec_value and temperature:
+            print(f"Empfangene Werte: EC: {ec_value}, Temperatur: {temperature}")
+            return jsonify({"message": "Daten empfangen"}), 200
+        else:
+            return jsonify({"error": "Fehlende Werte"}), 400
+    else:
+        return jsonify({"error": "Ungültige Daten"}), 400
 
-    data = request.json
-    if not data:
-        return "Keine Daten erhalten", 400
-
-    # Ziel-EC-Wert und Korrekturintervall aktualisieren
-    target_ec = data.get('target_ec', target_ec)
-    correction_interval = data.get('interval', correction_interval)
-
-    # Speichern der neuen Parameter in der Datei
-    with open(PARAMS_FILE, "w") as f:
-        json.dump({
-            "target_ec": target_ec,
-            "interval": correction_interval
-        }, f, indent=4)
-
-    return jsonify({
-        "message": "Parameter erfolgreich aktualisiert",
-        "target_ec": target_ec,
-        "interval": correction_interval
-    }), 200
 
 @app.route('/')
 def index():
@@ -72,19 +63,17 @@ def index():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-
+    
 @app.route('/calibrate', methods=['POST'])
 def calibrate():
-    data = request.json
-    if not data:
-        return "Keine Daten erhalten", 400
-    
-    known_ec = data.get('known_ec')
-    if known_ec is None:
-        return "Kein Kalibrierungswert angegeben", 400
+    data = request.get_json()
+    if 'known_ec' in data:
+        known_ec = data['known_ec']
+        print(f"Kalibrierung mit bekanntem EC-Wert: {known_ec}")
+        # Hier könnte der Kalibrierungsfaktor gesetzt werden
+        return jsonify({"message": "Kalibrierung erfolgreich"}), 200
+    else:
+        return jsonify({"error": "Kein EC-Wert angegeben"}), 400
 
-    # Hier könntest du den Kalibrierungsfaktor setzen, z.B. in eine Datei speichern
-    global calibration_factor
-    calibration_factor = known_ec / current_ec_value  # current_ec_value ist der gemessene EC-Wert
-    return jsonify({"message": "Kalibrierung erfolgreich", "factor": calibration_factor})
-
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=5000)
