@@ -4,23 +4,24 @@ import os
 
 app = Flask(__name__)
 
-# Pfad zur Datenbankdatei
 DATA_FILE = "data/data.json"
 
-# Sicherstellen, dass die Datei existiert
 os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
 if not os.path.isfile(DATA_FILE):
     with open(DATA_FILE, "w") as f:
         json.dump([], f)
 
-# Route: Empfang von Sensordaten
+calibration_factor = 1.0  # Standard-Kalibrierungsfaktor
+
 @app.route('/data', methods=['POST'])
 def receive_data():
-    data = request.json  # JSON-Daten empfangen
+    data = request.json
     if not data:
         return "Keine Daten empfangen", 400
 
-    # Daten in Datei speichern
+    global calibration_factor
+    data['ec'] *= calibration_factor  # EC-Wert kalibrieren
+
     with open(DATA_FILE, "r+") as f:
         try:
             existing_data = json.load(f)
@@ -33,14 +34,21 @@ def receive_data():
 
     return "Daten erfolgreich gespeichert", 200
 
-# Route: Daten anzeigen
+@app.route('/calibrate', methods=['POST'])
+def calibrate():
+    global calibration_factor
+    new_factor = request.json.get("factor")
+    if new_factor is not None:
+        calibration_factor = float(new_factor)
+        return f"Kalibrierung auf Faktor {calibration_factor} gesetzt", 200
+    return "Kein Faktor angegeben", 400
+
 @app.route('/view')
 def view_data():
     with open(DATA_FILE, "r") as f:
         data = json.load(f)
     return jsonify(data)
 
-# Hauptseite
 @app.route('/')
 def index():
     return render_template('index.html')
