@@ -4,76 +4,75 @@ import json
 
 app = flask.Flask(__name__)
 
-# Globale Variablen für Messwerte und Konfiguration
-config = {
-    "ec_correction_frequency": 1,  # Wie oft pro Tag EC-Wert korrigiert wird
-    "watering_frequency": 1,       # Wie oft pro Tag gegossen wird
-    "watering_duration": 10,       # Gießdauer in Sekunden
-    "calibration_factor": 1.0,     # Kalibrierungsfaktor
-    "ec_target": 1.5               # Ziel-EC-Wert
+# Globale Variablen
+current_data = {
+    "ec": 0.0,
+    "water_temp": 0.0,
+    "air_temp": 0.0,
+    "calibration_factor": 1.0,
+}
+settings = {
+    "ec_correction_frequency": 1,
+    "watering_frequency": 1,
+    "watering_duration": 10,
 }
 
-sensor_data = {
-    "water_temperature": 0.0,
-    "air_temperature": 0.0,
-    "ec_value": 0.0
-}
-
-# Daten laden und speichern
-def load_config():
+# Lade gespeicherte Einstellungen
+def load_settings():
+    global settings
     try:
-        with open("config.json", "r") as f:
-            global config
-            config = json.load(f)
+        with open("config.json", "r") as file:
+            settings = json.load(file)
     except FileNotFoundError:
-        pass
+        save_settings()
 
-def save_config():
-    with open("config.json", "w") as f:
-        json.dump(config, f)
+# Speichere Einstellungen
+def save_settings():
+    with open("config.json", "w") as file:
+        json.dump(settings, file)
 
+# Startseite
 @app.route("/")
 def index():
     return render_template("index.html")
 
+# Route für aktuelle Daten
 @app.route("/get_data", methods=["GET"])
 def get_data():
-    return jsonify({"sensor_data": sensor_data})
-   
+    return jsonify(current_data)
 
-@app.route("/update_config", methods=["POST"])
-def update_config():
-    global config
+# Route zum Aktualisieren von Messdaten
+@app.route("/update_data", methods=["POST"])
+def update_data():
+    global current_data
     data = request.get_json()
-    config.update(data)
-    save_config()
-    return jsonify({"message": "Konfiguration aktualisiert"})
+    if data:
+        current_data.update(data)
+        return jsonify({"message": "Daten aktualisiert"}), 200
+    return jsonify({"error": "Ungültige Daten"}), 400
 
-# Route zum Aktualisieren der Sensordaten
-@app.route("/update_sensors", methods=["POST"])
-def update_sensors():
-    global sensor_data
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Ungültige Daten"}), 400
-
-    # Sensordaten aktualisieren
-    sensor_data.update(data)
-    return jsonify({"message": "Sensordaten aktualisiert"})
-
+# Route für Kalibrierung
 @app.route("/calibrate", methods=["POST"])
 def calibrate():
-    global config, sensor_data
     data = request.get_json()
     if "known_ec" in data:
-        known_ec = data["known_ec"]
-        config["calibration_factor"] = known_ec / sensor_data["ec_value"] if sensor_data["ec_value"] != 0 else 1.0
-        save_config()
-        return jsonify({"message": "Kalibrierung erfolgreich"})
-    return jsonify({"error": "Bekannter EC-Wert fehlt"}), 400
+        current_data["calibration_factor"] = data["known_ec"] / current_data["ec"]
+        return jsonify({"message": "Kalibrierung erfolgreich"}), 200
+    return jsonify({"error": "Kein EC-Wert angegeben"}), 400
 
+# Route zum Aktualisieren von Einstellungen
+@app.route("/update_settings", methods=["POST"])
+def update_settings():
+    global settings
+    data = request.get_json()
+    if data:
+        settings.update(data)
+        save_settings()
+        return jsonify({"message": "Einstellungen aktualisiert"}), 200
+    return jsonify({"error": "Ungültige Daten"}), 400
 
+# Lade Einstellungen beim Start
+load_settings()
 
 if __name__ == "__main__":
-    load_config()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)
