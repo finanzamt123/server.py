@@ -34,8 +34,8 @@ def load_settings():
             'watering_interval': 3
         }
 # Speichere Einstellungen
-def save_settings():
-    with open("config.json", "w") as file:
+def save_settings(settings):
+    with open(settings_file, 'w') as file:
         json.dump(settings, file)
 
 # Startseite
