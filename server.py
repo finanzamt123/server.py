@@ -69,6 +69,14 @@ def calibrate():
         return jsonify({"message": "Kalibrierung erfolgreich"})
     return jsonify({"error": "Bekannter EC-Wert fehlt"}), 400
 
+@app.route("/update_sensors", methods=["POST"])
+def update_sensors():
+    global sensor_data
+    data = request.get_json()
+    print(f"Empfangene Daten: {data}")  # Debug-Ausgabe
+    sensor_data.update(data)
+    return jsonify({"message": "Sensordaten aktualisiert"})
+
 if __name__ == "__main__":
     load_config()
     app.run(host="0.0.0.0", port=5000, debug=True)
