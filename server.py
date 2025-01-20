@@ -1,79 +1,74 @@
-import os
+import flask
+from flask import request, jsonify, render_template
 import json
-from flask import Flask, request, jsonify, render_template
 
-app = Flask(__name__)
+app = flask.Flask(__name__)
 
-# Datei zum Speichern der Parameter
-PARAMS_FILE = "data/params.json"
-os.makedirs(os.path.dirname(PARAMS_FILE), exist_ok=True)
+# Globale Variablen für Messwerte und Konfiguration
+config = {
+    "ec_correction_frequency": 1,  # Wie oft pro Tag EC-Wert korrigiert wird
+    "watering_frequency": 1,       # Wie oft pro Tag gegossen wird
+    "watering_duration": 10,       # Gießdauer in Sekunden
+    "calibration_factor": 1.0,     # Kalibrierungsfaktor
+    "ec_target": 1.5               # Ziel-EC-Wert
+}
 
-# Standardwerte
-target_ec = 2.0
-correction_interval = 60
+sensor_data = {
+    "water_temperature": 0.0,
+    "air_temperature": 0.0,
+    "ec_value": 0.0
+}
 
-# Lade die gespeicherten Parameter, falls vorhanden
-if os.path.isfile(PARAMS_FILE):
-    with open(PARAMS_FILE, "r") as f:
-        try:
-            params = json.load(f)
-            target_ec = params.get("target_ec", target_ec)
-            correction_interval = params.get("interval", correction_interval)
-        except json.JSONDecodeError:
-            pass
+# Daten laden und speichern
+def load_config():
+    try:
+        with open("config.json", "r") as f:
+            global config
+            config = json.load(f)
+    except FileNotFoundError:
+        pass
 
-@app.route('/data', methods=['POST'])
-def receive_data():
-    data = request.json
-    if not data:
-        return "Keine Daten empfangen", 400
-    
-    # Sensordaten speichern...
-    return "Daten erfolgreich gespeichert", 200
+def save_config():
+    with open("config.json", "w") as f:
+        json.dump(config, f)
 
-@app.route('/view')
-def view_data():
-    # Sensordaten anzeigen...
-    return jsonify({"target_ec": target_ec, "interval": correction_interval})
-
-@app.route('/control', methods=['GET'])
-def control_pump():
-    # Pumpensteuerung basierend auf EC-Wert...
-    return "EIN"  # Beispielantwort
-
-@app.route('/update_parameters', methods=['POST'])
-def update_parameters():
-    data = request.get_json()
-    
-    if data:
-        ec_value = data.get('ec')
-        temperature = data.get('temperature')
-        if ec_value and temperature:
-            print(f"Empfangene Werte: EC: {ec_value}, Temperatur: {temperature}")
-            return jsonify({"message": "Daten empfangen"}), 200
-        else:
-            return jsonify({"error": "Fehlende Werte"}), 400
-    else:
-        return jsonify({"error": "Ungültige Daten"}), 400
-
-
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
-    
-@app.route('/calibrate', methods=['POST'])
-def calibrate():
+@app.route("/get_data", methods=["GET"])
+def get_data():
+    return jsonify({
+        "sensor_data": sensor_data,
+        "config": config
+    })
+
+@app.route("/update_config", methods=["POST"])
+def update_config():
+    global config
     data = request.get_json()
-    if 'known_ec' in data:
-        known_ec = data['known_ec']
-        print(f"Kalibrierung mit bekanntem EC-Wert: {known_ec}")
-        # Hier könnte der Kalibrierungsfaktor gesetzt werden
-        return jsonify({"message": "Kalibrierung erfolgreich"}), 200
-    else:
-        return jsonify({"error": "Kein EC-Wert angegeben"}), 400
+    config.update(data)
+    save_config()
+    return jsonify({"message": "Konfiguration aktualisiert"})
+
+@app.route("/update_sensors", methods=["POST"])
+def update_sensors():
+    global sensor_data
+    data = request.get_json()
+    sensor_data.update(data)
+    return jsonify({"message": "Sensordaten aktualisiert"})
+
+@app.route("/calibrate", methods=["POST"])
+def calibrate():
+    global config, sensor_data
+    data = request.get_json()
+    if "known_ec" in data:
+        known_ec = data["known_ec"]
+        config["calibration_factor"] = known_ec / sensor_data["ec_value"] if sensor_data["ec_value"] != 0 else 1.0
+        save_config()
+        return jsonify({"message": "Kalibrierung erfolgreich"})
+    return jsonify({"error": "Bekannter EC-Wert fehlt"}), 400
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    load_config()
+    app.run(host="0.0.0.0", port=5000, debug=True)
