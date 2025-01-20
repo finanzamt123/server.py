@@ -3,37 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Düngemittel Computer</title>
+    <title>Düngemittelsteuerung</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <header>
-        <h1>Düngemittel Computer</h1>
-    </header>
-
-    <div class="container">
-        <h2>Messwerte:</h2>
-        <p>EC-Wert: <span id="ecValue">Wird geladen...</span></p>
-        <p>Wassertemperatur: <span id="waterTemp">Wird geladen...</span></p>
-        <p>Lufttemperatur: <span id="airTemp">Wird geladen...</span></p>
-        <p>Kalibrierungsfaktor: <span id="calibrationFactor">Wird geladen...</span></p>
-
-        <h2>Kalibrierung:</h2>
-        <input type="number" id="knownEC" placeholder="Bekannter EC-Wert" step="0.01">
-        <button onclick="calibrate()">Kalibrieren</button>
-        <p id="calibrationStatus"></p>
-
-        <h2>Einstellungen:</h2>
-        <label>EC-Korrektur-Häufigkeit (pro Tag):</label>
-        <input type="number" id="ecFrequency" step="1">
-        <label>Bewässerungshäufigkeit (pro Tag):</label>
-        <input type="number" id="wateringFrequency" step="1">
-        <label>Bewässerungsdauer (Sekunden):</label>
-        <input type="number" id="wateringDuration" step="1">
-        <button onclick="updateSettings()">Einstellungen speichern</button>
-        <p id="settingsStatus"></p>
-    </div>
-
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <h1>Düngemittelsteuerung</h1>
+    
+    <p>Aktueller EC-Wert: {{ settings['ec_value'] }} mS/cm</p>
+    <p>Aktuelle Wassertemperatur: {{ settings['water_temp'] }} °C</p>
+    
+    <h2>Werte anpassen</h2>
+    <form action="/update_settings" method="POST">
+        <label for="ec_value">Neuer EC-Wert:</label>
+        <input type="number" id="ec_value" name="ec_value" value="{{ settings['ec_value'] }}" step="0.01" required>
+        <br>
+        
+        <label for="water_temp">Neue Wassertemperatur:</label>
+        <input type="number" id="water_temp" name="water_temp" value="{{ settings['water_temp'] }}" step="0.1" required>
+        <br>
+        
+        <label for="watering_time">Bewässerungszeit (Sekunden):</label>
+        <input type="number" id="watering_time" name="watering_time" value="{{ settings['watering_time'] }}" required>
+        <br>
+        
+        <label for="watering_interval">Bewässerungsintervall (Stunden):</label>
+        <input type="number" id="watering_interval" name="watering_interval" value="{{ settings['watering_interval'] }}" required>
+        <br>
+        
+        <button type="submit">Einstellungen speichern</button>
+    </form>
 </body>
 </html>
