@@ -32,7 +32,7 @@ def load_settings():
             'water_temp': 0.0,
             'watering_time': 10,
             'watering_interval': 3
-
+        }
 # Speichere Einstellungen
 def save_settings():
     with open("config.json", "w") as file:
