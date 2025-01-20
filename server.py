@@ -71,11 +71,8 @@ def calibrate():
 
 @app.route("/update_sensors", methods=["POST"])
 def update_sensors():
-    global sensor_data
-    data = request.get_json()
-    print(f"Empfangene Daten: {data}")  # Debug-Ausgabe
-    sensor_data.update(data)
-    return jsonify({"message": "Sensordaten aktualisiert"})
+    # Code für das Verarbeiten von Sensordaten
+
 
 if __name__ == "__main__":
     load_config()
