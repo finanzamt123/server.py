@@ -39,7 +39,7 @@ def index():
 @app.route("/get_data", methods=["GET"])
 def get_data():
     return jsonify({"sensor_data": sensor_data})
-    })
+   
 
 @app.route("/update_config", methods=["POST"])
 def update_config():
