@@ -38,9 +38,7 @@ def index():
 
 @app.route("/get_data", methods=["GET"])
 def get_data():
-    return jsonify({
-        "sensor_data": sensor_data,
-        "config": config
+    return jsonify({"sensor_data": sensor_data})
     })
 
 @app.route("/update_config", methods=["POST"])
@@ -51,10 +49,15 @@ def update_config():
     save_config()
     return jsonify({"message": "Konfiguration aktualisiert"})
 
+# Route zum Aktualisieren der Sensordaten
 @app.route("/update_sensors", methods=["POST"])
 def update_sensors():
     global sensor_data
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Ungültige Daten"}), 400
+
+    # Sensordaten aktualisieren
     sensor_data.update(data)
     return jsonify({"message": "Sensordaten aktualisiert"})
 
@@ -69,9 +72,6 @@ def calibrate():
         return jsonify({"message": "Kalibrierung erfolgreich"})
     return jsonify({"error": "Bekannter EC-Wert fehlt"}), 400
 
-@app.route("/update_sensors", methods=["POST"])
-def update_sensors():
-    # Code für das Verarbeiten von Sensordaten
 
 
 if __name__ == "__main__":
