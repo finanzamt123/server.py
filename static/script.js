@@ -38,5 +38,22 @@ function calibrate() {
     }).then(response => response.json())
       .then(data => alert(data.message));
 }
+function fetchData() {
+    fetch(`${serverUrl}/get_data`)
+        .then(response => {
+            if (!response.ok) throw new Error("Fehler beim Abrufen der Daten");
+            return response.json();
+        })
+        .then(data => {
+            console.log(data); // Debug-Ausgabe
+            document.getElementById("waterTemp").innerText = data.sensor_data.water_temperature;
+            document.getElementById("airTemp").innerText = data.sensor_data.air_temperature;
+            document.getElementById("ecValue").innerText = data.sensor_data.ec_value;
+        })
+        .catch(error => {
+            console.error("Fehler beim Abrufen der Daten:", error);
+        });
+}
+
 
 setInterval(fetchData, 10000); // Aktualisierung alle 10 Sekunden
