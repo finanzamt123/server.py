@@ -79,17 +79,25 @@ def update_settings():
     watering_time = request.form.get('watering_time')
     watering_interval = request.form.get('watering_interval')
 
-    # Werte in einem Dictionary speichern
-    settings = {
-        'ec_value': float(ec_value),
-        'water_temp': float(water_temp),
-        'watering_time': int(watering_time),
-        'watering_interval': int(watering_interval)
-    }
+    # Sicherstellen, dass alle Werte vorhanden sind
+    if ec_value and water_temp and watering_time and watering_interval:
+        # Werte in einem Dictionary speichern
+        settings = {
+            'ec_value': float(ec_value),
+            'water_temp': float(water_temp),
+            'watering_time': int(watering_time),
+            'watering_interval': int(watering_interval)
+        }
 
-    # Speichern der neuen Einstellungen in der JSON-Datei
-    save_settings(settings)
+        # Speichern der neuen Einstellungen in der JSON-Datei
+        save_settings(settings)
 
+        # Rückgabe der aktualisierten Seite mit den neuen Einstellungen
+        return render_template('index.html', settings=settings)
+    else:
+        # Falls falsche oder fehlende Eingaben, zurück zur Hauptseite mit Fehlermeldung
+        error_message = "Alle Eingabefelder müssen ausgefüllt sein!"
+        return render_template('index.html', settings=load_settings(), error_message=error_message)
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
