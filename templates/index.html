@@ -10,27 +10,30 @@
     <header>
         <h1>Düngemittel Computer</h1>
     </header>
+
     <div class="container">
-        <div id="status">
-            <h2>Aktuelle Messwerte:</h2>
-            <p>Wassertemperatur: <span id="waterTemp">-</span> °C</p>
-            <p>Lufttemperatur: <span id="airTemp">-</span> °C</p>
-            <p>EC-Wert: <span id="ecValue">-</span></p>
-        </div>
-        <div id="settings">
-            <h2>Einstellungen:</h2>
-            <p>Ziel-EC-Wert: <input type="number" id="ecTarget" step="0.1" value="1.5"> mS/cm</p>
-            <p>EC-Korrektur (pro Tag): <input type="number" id="ecFrequency" value="1"></p>
-            <p>Bewässerungshäufigkeit (pro Tag): <input type="number" id="waterFrequency" value="1"></p>
-            <p>Bewässerungsdauer: <input type="number" id="waterDuration" value="10"> Sek.</p>
-            <button onclick="saveSettings()">Speichern</button>
-        </div>
-        <div id="calibration">
-            <h2>Kalibrierung:</h2>
-            <p>Bekannter EC-Wert: <input type="number" id="knownEC" step="0.1"></p>
-            <button onclick="calibrate()">Kalibrieren</button>
-        </div>
+        <h2>Messwerte:</h2>
+        <p>EC-Wert: <span id="ecValue">Wird geladen...</span></p>
+        <p>Wassertemperatur: <span id="waterTemp">Wird geladen...</span></p>
+        <p>Lufttemperatur: <span id="airTemp">Wird geladen...</span></p>
+        <p>Kalibrierungsfaktor: <span id="calibrationFactor">Wird geladen...</span></p>
+
+        <h2>Kalibrierung:</h2>
+        <input type="number" id="knownEC" placeholder="Bekannter EC-Wert" step="0.01">
+        <button onclick="calibrate()">Kalibrieren</button>
+        <p id="calibrationStatus"></p>
+
+        <h2>Einstellungen:</h2>
+        <label>EC-Korrektur-Häufigkeit (pro Tag):</label>
+        <input type="number" id="ecFrequency" step="1">
+        <label>Bewässerungshäufigkeit (pro Tag):</label>
+        <input type="number" id="wateringFrequency" step="1">
+        <label>Bewässerungsdauer (Sekunden):</label>
+        <input type="number" id="wateringDuration" step="1">
+        <button onclick="updateSettings()">Einstellungen speichern</button>
+        <p id="settingsStatus"></p>
     </div>
+
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
