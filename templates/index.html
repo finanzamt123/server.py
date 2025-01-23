@@ -3,6 +3,7 @@
 <head>
     <title>Hydroponic System</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/static/js/script.js" defer></script>
 </head>
 <body>
@@ -11,17 +12,19 @@
 
         <h2>Aktuelle Werte</h2>
         <p>Wassertemperatur: <span id="waterTemp">{{ data.sensor_data.water_temp }} °C</span></p>
-        <p>EC-Wert: <span id="ecValue">{{ data.sensor_data.tds }} ppm</span></p>
+        <p>EC-Wert: <span id="ecValue">{{ data.sensor_data.tds }} µS/cm</span></p>
+
+        <canvas id="ecChart" width="400" height="200"></canvas>
 
         <h2>Kalibrierung</h2>
         <form id="calibrationForm">
-            <input type="number" id="calibrationValue" placeholder="Kalibrierwert eingeben (ppm)" required>
+            <input type="number" id="calibrationValue" placeholder="Kalibrierwert eingeben (µS/cm)" required>
             <button type="button" onclick="calibrateEC()">Kalibrieren</button>
         </form>
 
         <h2>Einstellungen</h2>
         <form id="settingsForm">
-            <label for="ecTarget">Ziel-EC-Wert (ppm):</label>
+            <label for="ecTarget">Ziel-EC-Wert (µS/cm):</label>
             <input type="number" id="ecTarget" placeholder="Ziel-EC-Wert" required>
             
             <label for="waterSchedule">Gießplan (Uhrzeit):</label>
@@ -31,38 +34,4 @@
         </form>
     </div>
 </body>
-<script>
-    function calibrateEC() {
-        const calibrationValue = document.getElementById("calibrationValue").value;
-
-        fetch("/update_settings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ calibration: calibrationValue })
-        }).then(response => {
-            if (response.ok) {
-                alert("Kalibrierung erfolgreich gespeichert.");
-            } else {
-                alert("Fehler bei der Kalibrierung.");
-            }
-        });
-    }
-
-    function updateSettings() {
-        const ecTarget = document.getElementById("ecTarget").value;
-        const waterSchedule = document.getElementById("waterSchedule").value;
-
-        fetch("/update_settings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ec_target: ecTarget, water_schedule: waterSchedule })
-        }).then(response => {
-            if (response.ok) {
-                alert("Einstellungen erfolgreich gespeichert.");
-            } else {
-                alert("Fehler beim Speichern der Einstellungen.");
-            }
-        });
-    }
-</script>
 </html>
