@@ -1,39 +1,73 @@
 from flask import Flask, render_template, request, jsonify
 import json
+import os
+import time
+from datetime import datetime
 
 app = Flask(__name__)
 
-DATA_FILE = "data.json"
+SETTINGS_FILE = "settings.json"
+SENSOR_LOG_FILE = "sensor_data.json"  # Datei für Sensordaten
 
-def load_data():
-    try:
-        with open(DATA_FILE, "r") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return {"settings": {}, "sensor_data": {}}
+# Laden oder Erstellen der JSON-Datei
+try:
+    with open(SETTINGS_FILE, "r") as file:
+        SETTINGS = json.load(file)
+except FileNotFoundError:
+    SETTINGS = {
+        "ec_target": 2000,  # Standard-Zielwert in µS/cm
+        "water_schedule": "08:00, 20:00",
+        "calibration": 0  # Standardkalibrierwert
+    }
+    with open(SETTINGS_FILE, "w") as file:
+        json.dump(SETTINGS, file)
 
-def save_data(data):
-    with open(DATA_FILE, "w") as file:
-        json.dump(data, file)
+# Sensor-Daten-Log initialisieren
+if not os.path.exists(SENSOR_LOG_FILE):
+    with open(SENSOR_LOG_FILE, "w") as file:
+        json.dump([], file)
 
+# Route: Anzeige der Website
 @app.route("/")
 def index():
-    data = load_data()
-    return render_template("index.html", data=data)
+    with open(SENSOR_LOG_FILE, "r") as file:
+        sensor_data = json.load(file)
+    latest_data = sensor_data[-1] if sensor_data else {"water_temp": 0, "tds": 0}  # Letzter Eintrag
+    return render_template("index.html", data={"settings": SETTINGS, "sensor_data": latest_data})
 
+# Route: Sensor-Daten empfangen
 @app.route("/update_sensor_data", methods=["POST"])
 def update_sensor_data():
-    data = load_data()
-    data["sensor_data"] = request.json
-    save_data(data)
-    return "OK", 200
+    new_data = request.get_json()
+    if new_data:
+        new_data["timestamp"] = int(time.time())
+        with open(SENSOR_LOG_FILE, "r+") as file:
+            data = json.load(file)
+            data.append(new_data)  # Neue Daten anhängen
+            # Nur die letzten 24 Stunden behalten
+            cutoff = int(time.time()) - 86400
+            data = [entry for entry in data if entry["timestamp"] > cutoff]
+            file.seek(0)
+            file.truncate()
+            json.dump(data, file)
+    return "OK"
 
+# Route: Sensordaten abrufen
+@app.route("/get_sensor_data", methods=["GET"])
+def get_sensor_data():
+    with open(SENSOR_LOG_FILE, "r") as file:
+        data = json.load(file)
+    return jsonify(data)
+
+# Route: Einstellungen aktualisieren
 @app.route("/update_settings", methods=["POST"])
 def update_settings():
-    data = load_data()
-    data["settings"] = request.json
-    save_data(data)
-    return "OK", 200
+    new_settings = request.get_json()
+    if new_settings:
+        SETTINGS.update(new_settings)
+        with open(SETTINGS_FILE, "w") as file:
+            json.dump(SETTINGS, file)
+    return jsonify(SETTINGS)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
