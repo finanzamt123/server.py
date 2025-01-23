@@ -21,18 +21,51 @@
             <input type="number" id="calibrationValue" placeholder="Kalibrierwert eingeben (µS/cm)" required>
             <button type="button" onclick="calibrateEC()">Kalibrieren</button>
         </form>
+<h2>Gießplan</h2>
+    <table id="wateringScheduleTable">
+        <thead>
+            <tr>
+                <th>Uhrzeit</th>
+                <th>Dauer (Minuten)</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in data.settings.watering_schedule %}
+            <tr>
+                <td>{{ entry.time }}</td>
+                <td>{{ entry.duration }}</td>
+                <td><button onclick="deleteWateringEntry('{{ loop.index0 }}')">Löschen</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button onclick="addWateringEntry()">Eintrag hinzufügen</button>
 
-        <h2>Einstellungen</h2>
-        <form id="settingsForm">
-            <label for="ecTarget">Ziel-EC-Wert (µS/cm):</label>
-            <input type="number" id="ecTarget" placeholder="Ziel-EC-Wert" required>
-            
-            <label for="waterSchedule">Gießplan (Uhrzeit):</label>
-            <input type="text" id="waterSchedule" placeholder="z.B. 08:00, 20:00" required>
-            
-            <button type="button" onclick="updateSettings()">Einstellungen speichern</button>
-        </form>
-    </div>
+    <!-- EC-Korrekturplan -->
+    <h2>EC-Korrekturplan</h2>
+    <table id="ecCorrectionScheduleTable">
+        <thead>
+            <tr>
+                <th>Uhrzeit</th>
+                <th>Dauer (Minuten)</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in data.settings.ec_correction_schedule %}
+            <tr>
+                <td>{{ entry.time }}</td>
+                <td>{{ entry.duration }}</td>
+                <td><button onclick="deleteECCorrectionEntry('{{ loop.index0 }}')">Löschen</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button onclick="addECCorrectionEntry()">Eintrag hinzufügen</button>
+</div>
+
+       
 </body>
 <script>
     function calibrateEC() {
