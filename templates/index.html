@@ -1,104 +1,68 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Hydroponic System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Düngemittel Steuerung</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/static/js/script.js" defer></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Hydroponic System</h1>
+    <h1>Düngemittel Steuerung</h1>
 
-        <h2>Aktuelle Werte</h2>
-        <p>Wassertemperatur: <span id="waterTemp">{{ data.sensor_data.water_temp }} °C</span></p>
-        <p>EC-Wert: <span id="ecValue">{{ data.sensor_data.tds }} µS/cm</span></p>
+    <!-- Anzeige der aktuellen Messwerte -->
+    <section>
+        <h2>Aktuelle Messwerte</h2>
+        <p>EC-Wert: <span id="currentEC">Wird geladen...</span> µS</p>
+        <p>Lufttemperatur: <span id="airTemp">Wird geladen...</span> °C</p>
+        <p>Wassertemperatur: <span id="waterTemp">Wird geladen...</span> °C</p>
+    </section>
 
-        <canvas id="ecChart" width="400" height="200"></canvas>
+    <!-- Tabellen für Gießplan und EC-Korrektur -->
+    <section>
+        <h2>Gießplan</h2>
+        <table id="wateringScheduleTable">
+            <thead>
+                <tr>
+                    <th>Uhrzeit</th>
+                    <th>Dauer (Minuten)</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dynamischer Inhalt -->
+            </tbody>
+        </table>
+        <button onclick="addWateringEntry()">Neuer Eintrag</button>
+    </section>
 
+    <section>
+        <h2>EC-Korrekturplan</h2>
+        <table id="ecCorrectionScheduleTable">
+            <thead>
+                <tr>
+                    <th>Uhrzeit</th>
+                    <th>Dauer (Minuten)</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Dynamischer Inhalt -->
+            </tbody>
+        </table>
+        <button onclick="addECCorrectionEntry()">Neuer Eintrag</button>
+    </section>
+
+    <!-- Kalibrierung -->
+    <section>
         <h2>Kalibrierung</h2>
-        <form id="calibrationForm">
-            <input type="number" id="calibrationValue" placeholder="Kalibrierwert eingeben (µS/cm)" required>
-            <button type="button" onclick="calibrateEC()">Kalibrieren</button>
-        </form>
-<h2>Gießplan</h2>
-    <table id="wateringScheduleTable">
-        <thead>
-            <tr>
-                <th>Uhrzeit</th>
-                <th>Dauer (Minuten)</th>
-                <th>Aktionen</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in data.settings.watering_schedule %}
-            <tr>
-                <td>{{ entry.time }}</td>
-                <td>{{ entry.duration }}</td>
-                <td><button onclick="deleteWateringEntry('{{ loop.index0 }}')">Löschen</button></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <button onclick="addWateringEntry()">Eintrag hinzufügen</button>
+        <button onclick="startCalibration()">Kalibrierung starten</button>
+    </section>
 
-    <!-- EC-Korrekturplan -->
-    <h2>EC-Korrekturplan</h2>
-    <table id="ecCorrectionScheduleTable">
-        <thead>
-            <tr>
-                <th>Uhrzeit</th>
-                <th>Dauer (Minuten)</th>
-                <th>Aktionen</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in data.settings.ec_correction_schedule %}
-            <tr>
-                <td>{{ entry.time }}</td>
-                <td>{{ entry.duration }}</td>
-                <td><button onclick="deleteECCorrectionEntry('{{ loop.index0 }}')">Löschen</button></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <button onclick="addECCorrectionEntry()">Eintrag hinzufügen</button>
-</div>
-
-       
+    <!-- Graph -->
+    <section>
+        <h2>EC-Wert Verlauf (letzte 24 Stunden)</h2>
+        <canvas id="ecGraph" width="600" height="400"></canvas>
+    </section>
 </body>
-<script>
-    function calibrateEC() {
-        const calibrationValue = document.getElementById("calibrationValue").value;
-
-        fetch("/update_settings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ calibration: calibrationValue })
-        }).then(response => {
-            if (response.ok) {
-                alert("Kalibrierung erfolgreich gespeichert.");
-            } else {
-                alert("Fehler bei der Kalibrierung.");
-            }
-        });
-    }
-
-    function updateSettings() {
-        const ecTarget = document.getElementById("ecTarget").value;
-        const waterSchedule = document.getElementById("waterSchedule").value;
-
-        fetch("/update_settings", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ec_target: ecTarget, water_schedule: waterSchedule })
-        }).then(response => {
-            if (response.ok) {
-                alert("Einstellungen erfolgreich gespeichert.");
-            } else {
-                alert("Fehler beim Speichern der Einstellungen.");
-            }
-        });
-    }
-</script>
 </html>
