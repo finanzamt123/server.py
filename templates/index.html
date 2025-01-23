@@ -1,37 +1,52 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Hydroponic System</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/static/js/script.js" defer></script>
-</head>
-<body>
-    <div class="container">
-        <h1>Hydroponic System</h1>
+<div class="container">
+    <h1>Hydroponic System</h1>
 
-        <h2>Aktuelle Werte</h2>
-        <p>Wassertemperatur: <span id="waterTemp">{{ data.sensor_data.water_temp }} °C</span></p>
-        <p>EC-Wert: <span id="ecValue">{{ data.sensor_data.tds }} µS/cm</span></p>
+    <!-- Aktuelle Werte -->
+    <h2>Aktuelle Werte</h2>
+    <p>Wassertemperatur: <span id="waterTemp">{{ data.sensor_data.water_temp }} °C</span></p>
+    <p>EC-Wert: <span id="ecValue">{{ data.sensor_data.tds }} µS/cm</span></p>
 
-        <canvas id="ecChart" width="400" height="200"></canvas>
+    <!-- Gießplan -->
+    <h2>Gießplan</h2>
+    <table id="wateringScheduleTable">
+        <thead>
+            <tr>
+                <th>Uhrzeit</th>
+                <th>Dauer (Minuten)</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in data.settings.watering_schedule %}
+            <tr>
+                <td>{{ entry.time }}</td>
+                <td>{{ entry.duration }}</td>
+                <td><button onclick="deleteWateringEntry('{{ loop.index0 }}')">Löschen</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button onclick="addWateringEntry()">Eintrag hinzufügen</button>
 
-        <h2>Kalibrierung</h2>
-        <form id="calibrationForm">
-            <input type="number" id="calibrationValue" placeholder="Kalibrierwert eingeben (µS/cm)" required>
-            <button type="button" onclick="calibrateEC()">Kalibrieren</button>
-        </form>
-
-        <h2>Einstellungen</h2>
-        <form id="settingsForm">
-            <label for="ecTarget">Ziel-EC-Wert (µS/cm):</label>
-            <input type="number" id="ecTarget" placeholder="Ziel-EC-Wert" required>
-            
-            <label for="waterSchedule">Gießplan (Uhrzeit):</label>
-            <input type="text" id="waterSchedule" placeholder="z.B. 08:00, 20:00" required>
-            
-            <button type="button" onclick="updateSettings()">Einstellungen speichern</button>
-        </form>
-    </div>
-</body>
-</html>
+    <!-- EC-Korrekturplan -->
+    <h2>EC-Korrekturplan</h2>
+    <table id="ecCorrectionScheduleTable">
+        <thead>
+            <tr>
+                <th>Uhrzeit</th>
+                <th>Dauer (Minuten)</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in data.settings.ec_correction_schedule %}
+            <tr>
+                <td>{{ entry.time }}</td>
+                <td>{{ entry.duration }}</td>
+                <td><button onclick="deleteECCorrectionEntry('{{ loop.index0 }}')">Löschen</button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button onclick="addECCorrectionEntry()">Eintrag hinzufügen</button>
+</div>
