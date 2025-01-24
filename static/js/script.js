@@ -1,134 +1,76 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const updateInterval = 5000; // Update alle 5 Sekunden
-    const sensorEndpoint = "/get_sensor_data";
-    const ecChartCtx = document.getElementById("ecChart").getContext("2d");
+document.addEventListener("DOMContentLoaded", () => {
+    const ecValue = document.getElementById("ec-value");
+    const waterTemp = document.getElementById("water-temp");
+    const airTemp = document.getElementById("air-temp");
+    const ecGraph = document.getElementById("ec-graph").getContext("2d");
 
-    let ecChart = new Chart(ecChartCtx, {
-        type: "line",
-        data: {
-            labels: [],
-            datasets: [{
-                label: "EC-Wert (µS/cm)",
-                data: [],
-                borderColor: "rgba(75, 192, 192, 1)",
-                borderWidth: 2,
-                fill: false,
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: { title: { display: true, text: "Zeit" } },
-                y: { title: { display: true, text: "EC-Wert (µS/cm)" } }
-            }
-        }
-    });
+    let ecChart;
 
-    async function fetchSensorData() {
-        try {
-            const response = await fetch(sensorEndpoint);
-            const data = await response.json();
+    // Fetch initial data
+    async function fetchData() {
+        const response = await fetch("/");
+        const { current_values, schedules } = await response.json();
 
-            // Aktuelle Werte
-            const latest = data[data.length - 1] || { water_temp: 0, tds: 0 };
-            document.getElementById("waterTemp").textContent = `${latest.water_temp} °C`;
-            document.getElementById("ecValue").textContent = `${latest.tds} µS/cm`;
+        ecValue.textContent = current_values.ec.toFixed(2);
+        waterTemp.textContent = current_values.water_temp.toFixed(1);
+        airTemp.textContent = current_values.air_temp.toFixed(1);
 
-            // Graph-Daten aktualisieren
-            ecChart.data.labels = data.map(entry => new Date(entry.timestamp * 1000).toLocaleTimeString());
-            ecChart.data.datasets[0].data = data.map(entry => entry.tds);
+        updateScheduleTable("watering-schedule", schedules.watering);
+        updateScheduleTable("ec-correction-schedule", schedules.ec_correction);
+
+        fetchGraphData();
+    }
+
+    // Update schedule table
+    function updateScheduleTable(tableId, schedule) {
+        const tbody = document.getElementById(tableId).querySelector("tbody");
+        tbody.innerHTML = "";
+        schedule.forEach((entry, index) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${entry.time}</td>
+                <td>${entry.duration}</td>
+                <td>
+                    <button class="delete-btn" data-index="${index}" data-table="${tableId}">Löschen</button>
+                </td>`;
+            tbody.appendChild(row);
+        });
+    }
+
+    // Fetch and render graph data
+    async function fetchGraphData() {
+        const response = await fetch("/ec_data");
+        const data = await response.json();
+
+        if (!ecChart) {
+            ecChart = new Chart(ecGraph, {
+                type: "line",
+                data: {
+                    labels: data.timestamps,
+                    datasets: [{
+                        label: "EC-Wert (µS/cm)",
+                        data: data.values,
+                        borderColor: "blue",
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { title: { display: true, text: "Zeit" } },
+                        y: { title: { display: true, text: "EC-Wert (µS/cm)" } }
+                    }
+                }
+            });
+        } else {
+            ecChart.data.labels = data.timestamps;
+            ecChart.data.datasets[0].data = data.values;
             ecChart.update();
-        } catch (error) {
-            console.error("Fehler beim Abrufen der Sensordaten:", error);
         }
     }
-    // Hinzufügen eines neuen Eintrags zum Gießplan
-function addWateringEntry() {
-    const time = prompt("Bitte Uhrzeit eingeben (HH:MM):");
-    const duration = prompt("Bitte Dauer in Minuten eingeben:");
-    if (time && duration) {
-        fetch("/update_watering_schedule", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ time, duration }),
-        })
-            .then(response => response.json())
-            .then(updateWateringScheduleTable)
-            .catch(console.error);
-    }
-}
 
-// Löschen eines Eintrags aus dem Gießplan
-function deleteWateringEntry(index) {
-    fetch("/update_watering_schedule", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deleteIndex: index }),
-    })
-        .then(response => response.json())
-        .then(updateWateringScheduleTable)
-        .catch(console.error);
-}
+    fetchData();
 
-// Aktualisierung der Tabelle Gießplan
-function updateWateringScheduleTable(schedule) {
-    const tableBody = document.querySelector("#wateringScheduleTable tbody");
-    tableBody.innerHTML = schedule
-        .map(
-            (entry, index) => `
-        <tr>
-            <td>${entry.time}</td>
-            <td>${entry.duration}</td>
-            <td><button onclick="deleteWateringEntry(${index})">Löschen</button></td>
-        </tr>`
-        )
-        .join("");
-}
-
-// Hinzufügen eines neuen Eintrags zur EC-Korrektur
-function addECCorrectionEntry() {
-    const time = prompt("Bitte Uhrzeit eingeben (HH:MM):");
-    const duration = prompt("Bitte Dauer in Minuten eingeben:");
-    if (time && duration) {
-        fetch("/update_ec_correction_schedule", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ time, duration }),
-        })
-            .then(response => response.json())
-            .then(updateECCorrectionScheduleTable)
-            .catch(console.error);
-    }
-}
-
-// Löschen eines Eintrags aus der EC-Korrektur
-function deleteECCorrectionEntry(index) {
-    fetch("/update_ec_correction_schedule", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deleteIndex: index }),
-    })
-        .then(response => response.json())
-        .then(updateECCorrectionScheduleTable)
-        .catch(console.error);
-}
-
-// Aktualisierung der Tabelle EC-Korrektur
-function updateECCorrectionScheduleTable(schedule) {
-    const tableBody = document.querySelector("#ecCorrectionScheduleTable tbody");
-    tableBody.innerHTML = schedule
-        .map(
-            (entry, index) => `
-        <tr>
-            <td>${entry.time}</td>
-            <td>${entry.duration}</td>
-            <td><button onclick="deleteECCorrectionEntry(${index})">Löschen</button></td>
-        </tr>`
-        )
-        .join("");
-}
-
-
-    setInterval(fetchSensorData, updateInterval);
-    fetchSensorData();
+    // Auto-update every 60 seconds
+    setInterval(fetchData, 60000);
 });
