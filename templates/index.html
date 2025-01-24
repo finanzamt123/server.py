@@ -3,59 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Irrigation System</title>
+    <title>Plant Monitoring</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <script src="/static/js/script.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <header>
-        <h1>Smart Irrigation System</h1>
-    </header>
-    <main>
-        <section id="sensor-data">
-            <h2>Aktuelle Messwerte</h2>
-            <ul>
-                <li>EC-Wert: <span id="ec-value">Wird geladen...</span> µS/cm</li>
-                <li>Wassertemperatur: <span id="water-temp">Wird geladen...</span> °C</li>
-                <li>Lufttemperatur: <span id="air-temp">Wird geladen...</span> °C</li>
-            </ul>
-            <canvas id="ec-graph" width="600" height="300"></canvas>
-        </section>
-        <section id="calibration">
-            <h2>Kalibrierung</h2>
-            <form id="calibration-form">
-                <label for="ec-offset">EC-Offset:</label>
-                <input type="number" id="ec-offset" name="ec_offset" step="0.01">
-                <button type="submit">Speichern</button>
-            </form>
-        </section>
-        <section id="schedules">
-            <h2>Gießplan</h2>
-            <table id="watering-schedule">
-                <thead>
-                    <tr>
-                        <th>Zeit</th>
-                        <th>Dauer (Sekunden)</th>
-                        <th>Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <button id="add-watering">Gießzeit hinzufügen</button>
-            
-            <h2>EC-Wert-Korrektur</h2>
-            <table id="ec-correction-schedule">
-                <thead>
-                    <tr>
-                        <th>Zeit</th>
-                        <th>Dauer (Sekunden)</th>
-                        <th>Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <button id="add-ec-correction">Korrekturzeit hinzufügen</button>
-        </section>
-    </main>
+    <h1>Plant Monitoring System</h1>
+    <div>
+        <h2>Current Values</h2>
+        <p>EC Value: <span id="ec_value">Loading...</span> µS</p>
+        <p>Water Temperature: <span id="water_temp">Loading...</span> °C</p>
+        <p>Air Temperature: <span id="air_temp">Loading...</span> °C</p>
+    </div>
+    <div>
+        <h2>Watering Schedule</h2>
+        <table id="watering_schedule">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Duration (minutes)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button onclick="addSchedule('watering')">Add Watering</button>
+    </div>
+    <div>
+        <h2>EC Correction Schedule</h2>
+        <table id="ec_schedule">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <button onclick="addSchedule('ec_correction')">Add EC Correction</button>
+    </div>
+    <div>
+        <h2>EC Value (Last 24 Hours)</h2>
+        <canvas id="ec_graph"></canvas>
+    </div>
+    <script src="/static/js/script.js"></script>
 </body>
 </html>
