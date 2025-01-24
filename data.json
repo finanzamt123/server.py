@@ -1,1 +1,17 @@
-
+{
+    "calibration": {
+        "ec_offset": 0
+    },
+    "schedules": {
+        "watering": [],
+        "ec_correction": []
+    },
+    "target_values": {
+        "ec_target": 1000
+    },
+    "current_values": {
+        "ec": 0,
+        "water_temp": 0,
+        "air_temp": 0
+    }
+}
