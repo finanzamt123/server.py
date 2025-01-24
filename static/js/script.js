@@ -1,76 +1,41 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const ecValue = document.getElementById("ec-value");
-    const waterTemp = document.getElementById("water-temp");
-    const airTemp = document.getElementById("air-temp");
-    const ecGraph = document.getElementById("ec-graph").getContext("2d");
+    updateCurrentValues();
+    loadSchedules();
+    loadGraph();
+});
 
-    let ecChart;
-
-    // Fetch initial data
-    async function fetchData() {
-        const response = await fetch("/");
-        const { current_values, schedules } = await response.json();
-
-        ecValue.textContent = current_values.ec.toFixed(2);
-        waterTemp.textContent = current_values.water_temp.toFixed(1);
-        airTemp.textContent = current_values.air_temp.toFixed(1);
-
-        updateScheduleTable("watering-schedule", schedules.watering);
-        updateScheduleTable("ec-correction-schedule", schedules.ec_correction);
-
-        fetchGraphData();
-    }
-
-    // Update schedule table
-    function updateScheduleTable(tableId, schedule) {
-        const tbody = document.getElementById(tableId).querySelector("tbody");
-        tbody.innerHTML = "";
-        schedule.forEach((entry, index) => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${entry.time}</td>
-                <td>${entry.duration}</td>
-                <td>
-                    <button class="delete-btn" data-index="${index}" data-table="${tableId}">Löschen</button>
-                </td>`;
-            tbody.appendChild(row);
+function updateCurrentValues() {
+    fetch("/current_values")
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("ec_value").textContent = data.ec;
+            document.getElementById("water_temp").textContent = data.water_temp;
+            document.getElementById("air_temp").textContent = data.air_temp;
         });
-    }
+}
 
-    // Fetch and render graph data
-    async function fetchGraphData() {
-        const response = await fetch("/ec_data");
-        const data = await response.json();
+function loadSchedules() {
+    // Implement loading and rendering of schedules
+}
 
-        if (!ecChart) {
-            ecChart = new Chart(ecGraph, {
+function loadGraph() {
+    fetch("/ec_graph_data")
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById("ec_graph").getContext("2d");
+            const labels = data.map(entry => entry.timestamp);
+            const values = data.map(entry => entry.ec_value);
+            new Chart(ctx, {
                 type: "line",
                 data: {
-                    labels: data.timestamps,
+                    labels: labels,
                     datasets: [{
-                        label: "EC-Wert (µS/cm)",
-                        data: data.values,
+                        label: "EC Value (µS)",
+                        data: values,
                         borderColor: "blue",
                         fill: false
                     }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: { title: { display: true, text: "Zeit" } },
-                        y: { title: { display: true, text: "EC-Wert (µS/cm)" } }
-                    }
                 }
             });
-        } else {
-            ecChart.data.labels = data.timestamps;
-            ecChart.data.datasets[0].data = data.values;
-            ecChart.update();
-        }
-    }
-
-    fetchData();
-
-    // Auto-update every 60 seconds
-    setInterval(fetchData, 60000);
-});
+        });
+}
